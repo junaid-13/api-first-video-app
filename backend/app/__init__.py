@@ -4,7 +4,7 @@ from .extensions import mongo, jwt, limiter
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object(Config)
+    app.config.from_object("app.config.Config")
 
     mongo.init_app(app)
     jwt.init_app(app)
