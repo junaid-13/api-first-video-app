@@ -4,7 +4,8 @@ import uuid
 import secrets
 import hashlib
 from datetime import datetime, timedelta
-from flask import current_app
+from functools import wraps
+from flask import request, jsonify, current_app, g
 
 def hash_password(password: str) -> str:
     password_bytes = password.encode("utf-8")
@@ -34,3 +35,48 @@ def generate_refresh_token() -> str:
 
 def hash_refresh_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
+def jwt_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        auth_header = request.headers.get("Authorization")
+
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return jsonify({
+                "error": {
+                    "code": "AUTH_REQUIRED",
+                    "message": "Authorization token required"
+                }
+            }), 401
+
+        token = auth_header.split(" ", 1)[1]
+
+        try:
+            payload = jwt.decode(
+                token,
+                current_app.config["JWT_SECRET"],
+                algorithms=["HS256"],
+                audience="mobile",
+                issuer="api.videoapp"
+            )
+        except jwt.ExpiredSignatureError:
+            return jsonify({
+                "error": {
+                    "code": "AUTH_EXPIRED",
+                    "message": "Access token expired"
+                }
+            }), 401
+        except jwt.InvalidTokenError:
+            return jsonify({
+                "error": {
+                    "code": "AUTH_INVALID",
+                    "message": "Invalid access token"
+                }
+            }), 401
+
+        # attach identity to request context
+        g.user_id = payload["sub"]
+        g.email = payload["email"]
+
+        return fn(*args, **kwargs)
+
+    return wrapper
