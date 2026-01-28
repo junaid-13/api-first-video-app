@@ -7,7 +7,16 @@ import DashboardScreen from "../screens/DashboardScreen";
 import VideoPlayerScreen from "../screens/VideoPlayerScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 
-const Stack = createNativeStackNavigator();
+/* ✅ DEFINE PARAM LIST */
+export type RootStackParamList = {
+  Login: undefined;
+  Dashboard: undefined;
+  VideoPlayer: { videoId: string };
+  Settings: undefined;
+};
+
+/* ✅ PASS GENERIC */
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
   return (

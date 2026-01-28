@@ -1,6 +1,8 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, redirect
 from app.utils.security import jwt_required
 from app.models.video import Video
+from app.utils.stream_signing import generate_signed_url
+
 
 
 video_bp = Blueprint("video", __name__, url_prefix="/api/v1")
@@ -28,6 +30,7 @@ def stream(video_id):
                 "message": "Video not found"
             }
         }), 404
-
+    
+    signed_url = generate_signed_url(video["stream_url"])
     # backend redirect (no proxying)
-    return redirect(video["stream_url"], code=302)
+    return redirect(signed_url, code=302)
