@@ -1,35 +1,39 @@
-const BASE_URL = 'http://<BACKEND_IP>:5000/api/v1';
+const BASE_URL = "http://3.238.68.13:5000/api/v1";
 
-let accessToken: string | null = null;
-
-export const setAccessToken = (token: string) => {
-  accessToken = token;
-};
-
-export const apiRequest = async (
-  endpoint: string,
-  method: string = 'GET',
-  body?: any
-) => {
-  const headers: any = {
-    'Content-Type': 'application/json',
-  };
-
-  if (accessToken) {
-    headers.Authorization = `Bearer ${accessToken}`;
-  }
-
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
+/* ---------- AUTH ---------- */
+export async function login(email: string, password: string) {
+  const response = await fetch(`${BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password }),
   });
 
-  const data = await response.json();
-
   if (!response.ok) {
-    throw new Error(data?.error?.message || 'API Error');
+    throw new Error("Login failed");
   }
 
-  return data;
-};
+  return response.json(); // { access_token, refresh_token }
+}
+
+/* ---------- VIDEOS ---------- */
+export async function fetchVideos(token: string) {
+  const response = await fetch(`${BASE_URL}/video`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch videos");
+  }
+
+  return response.json(); // { videos: [...] }
+}
+
+/* ---------- STREAM URL ---------- */
+export function getStreamUrl(videoId: string) {
+  return `${BASE_URL}/video/${videoId}/stream`;
+}
